@@ -1,8 +1,8 @@
 # Architecture Technique - Assistant Architect
 
-**Version** : 1.0.0
+**Version** : 1.1.0
 **Date** : 2025-11-26
-**Statut** : MVP Démo Fonctionnel
+**Statut** : MVP Démo Fonctionnel + V2 en cours
 
 ---
 
@@ -408,19 +408,220 @@ python demo/run_demo.py --provider gemini
 
 ---
 
-## 9. Évolutions Prévues (v2+)
+## 9. Architecture V2 - Man in the Loop
+
+### 9.1 Objectifs V2
+
+La version 2 introduit :
+- **Catalogue enrichi** : Experts techniques + Assistants transversaux
+- **Recommandations dynamiques** : Adaptées à chaque projet analysé
+- **Feedback utilisateur** : Retours sur les propositions avant sélection
+- **Multi-sélection** : Génération de plusieurs agents en batch
+- **Man in the loop** : L'utilisateur guide le processus de recommandation
+
+### 9.2 Nouveau Workflow (8 phases)
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                           DEMO V2 - WORKFLOW                                 │
+│                                                                             │
+│  Phase 1          Phase 2         Phase 3           Phase 4                 │
+│  ┌─────────┐      ┌─────────┐     ┌─────────────┐   ┌─────────────┐        │
+│  │ ANALYSE │─────▶│ DIALOGUE│────▶│ RECOMMAND.  │──▶│ FEEDBACK    │        │
+│  │         │      │         │     │ (dynamique) │   │ (man in     │        │
+│  └─────────┘      └─────────┘     └─────────────┘   │  the loop)  │        │
+│                                                      └──────┬──────┘        │
+│                                                             │               │
+│                     ┌───────────────────────────────────────┘               │
+│                     ▼                                                       │
+│  Phase 5           Phase 6         Phase 7          Phase 8                 │
+│  ┌─────────────┐   ┌─────────────┐ ┌─────────────┐  ┌─────────────┐        │
+│  │ SÉLECTION   │──▶│ GÉNÉRATION  │▶│ VALIDATION  │─▶│ DÉPLOIEMENT │        │
+│  │ (multiple)  │   │ (batch)     │ │ (par agent) │  │ (batch)     │        │
+│  └─────────────┘   └─────────────┘ └─────────────┘  └─────────────┘        │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+### 9.3 Catalogue V2 - Approche Hybride
+
+Le catalogue V2 combine deux catégories d'agents :
+
+#### Experts Techniques (par domaine)
+
+Spécialisés par stack technologique, **générés dynamiquement** selon le projet analysé.
+
+| Expert | Spécialisations | Détection |
+|--------|-----------------|-----------|
+| 🎨 **Frontend Expert** | React, Vue, Angular, TypeScript, CSS, Tailwind | Frameworks JS détectés |
+| ⚙️ **Backend Expert** | Spring Boot, Django, Node.js, FastAPI, Go, Rust | Frameworks backend détectés |
+| 🗄️ **Data Expert** | PostgreSQL, MongoDB, Redis, ETL, BigData | Base de données détectées |
+| 🚀 **DevOps Expert** | Docker, Kubernetes, Terraform, CI/CD, Ansible | Fichiers infra détectés |
+| 📱 **Mobile Expert** | iOS/Swift, Android/Kotlin, Flutter, React Native | SDK mobile détectés |
+| ☁️ **Cloud Expert** | AWS, GCP, Azure, Serverless | Services cloud détectés |
+
+#### Assistants Transversaux (par besoin)
+
+Recommandés selon les besoins identifiés lors du dialogue.
+
+| Assistant | Déclencheurs | Capacités |
+|-----------|--------------|-----------|
+| 🔒 **Security Checker** | Données sensibles, compliance | OWASP, secrets, audit |
+| 📚 **Onboarding Guide** | Équipe mixte/junior, projet complexe | Architecture, conventions |
+| 📝 **Doc Generator** | Documentation manquante | README, API docs, comments |
+| ♻️ **Refactoring Advisor** | Dette technique identifiée | Clean code, patterns, SOLID |
+| ⚡ **Performance Optimizer** | Problèmes de perf signalés | Profiling, caching, lazy loading |
+| 🧪 **Test Advisor** | Coverage faible, besoin TDD | Unit tests, mocking, E2E |
+
+### 9.4 Génération Dynamique
+
+Les agents ne sont **pas hardcodés**. Le contenu est généré dynamiquement :
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                     GÉNÉRATION DYNAMIQUE                                     │
+│                                                                             │
+│   REPO ENTRANT              ANALYSE                 AGENT GÉNÉRÉ            │
+│                                                                             │
+│   ┌─────────────┐      ┌─────────────────┐      ┌─────────────────────┐    │
+│   │ Project A   │      │ Stack détectée: │      │ Frontend Expert     │    │
+│   │ - React 18  │─────▶│ - React 18      │─────▶│                     │    │
+│   │ - TypeScript│      │ - TypeScript    │      │ Spécialisé React:   │    │
+│   │ - Tailwind  │      │ - Tailwind      │      │ - Hooks patterns    │    │
+│   └─────────────┘      └─────────────────┘      │ - State management  │    │
+│                                                 │ - Testing RTL       │    │
+│                                                 │ - Performance React │    │
+│                                                 └─────────────────────┘    │
+│                                                                             │
+│   ┌─────────────┐      ┌─────────────────┐      ┌─────────────────────┐    │
+│   │ Project B   │      │ Stack détectée: │      │ Frontend Expert     │    │
+│   │ - Vue 3     │─────▶│ - Vue 3         │─────▶│                     │    │
+│   │ - Pinia     │      │ - Pinia         │      │ Spécialisé Vue:     │    │
+│   │ - Vite      │      │ - Vite          │      │ - Composition API   │    │
+│   └─────────────┘      └─────────────────┘      │ - Pinia patterns    │    │
+│                                                 │ - Testing Vitest    │    │
+│                                                 │ - Performance Vue   │    │
+│                                                 └─────────────────────┘    │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+**Éléments dynamiques** :
+- Spécialisations de l'expert (selon technos détectées)
+- System prompt (contextualisé au projet)
+- Commandes disponibles (adaptées à la stack)
+- Base de connaissances (conventions du projet)
+- Score de pertinence (calculé pour chaque projet)
+
+**Éléments statiques** :
+- Types d'experts possibles (catalogue de base)
+- Structure des agents générés
+- Règles BPCE (appliquées uniformément)
+
+### 9.5 Phase Feedback (Nouvelle)
+
+L'utilisateur peut donner son avis sur chaque recommandation :
+
+```
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                    FEEDBACK SUR LES RECOMMANDATIONS                          ║
+╠══════════════════════════════════════════════════════════════════════════════╣
+║                                                                              ║
+║  Pour chaque agent, indiquez votre intérêt :                                ║
+║                                                                              ║
+║  1. Frontend Expert (React/TypeScript) 🔴 [HIGH]                            ║
+║     └─ Votre avis: [1] Très utile  [2] Peut-être  [3] Pas pertinent         ║
+║     └─ Commentaire (optionnel): ___________________________________         ║
+║                                                                              ║
+║  2. Backend Expert (Node.js) 🔴 [HIGH]                                      ║
+║     └─ Votre avis: [1] Très utile  [2] Peut-être  [3] Pas pertinent         ║
+║                                                                              ║
+║  [R] Raffiner les recommandations avec mes retours                          ║
+║  [S] Passer à la sélection                                                   ║
+║                                                                              ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+```
+
+### 9.6 Multi-Sélection et Génération Batch
+
+```
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                    SÉLECTION DES AGENTS À GÉNÉRER                            ║
+╠══════════════════════════════════════════════════════════════════════════════╣
+║                                                                              ║
+║  📦 EXPERTS TECHNIQUES                                                       ║
+║  [X] 1. Frontend Expert (React/TypeScript)         🔴 HIGH                  ║
+║  [X] 2. Backend Expert (Node.js)                   🔴 HIGH                  ║
+║  [ ] 3. Data Expert (MongoDB)                      🟡 MEDIUM                ║
+║                                                                              ║
+║  🔧 ASSISTANTS TRANSVERSAUX                                                  ║
+║  [X] 4. Security Checker                           🔴 HIGH                  ║
+║  [ ] 5. Onboarding Guide                           🟡 MEDIUM                ║
+║                                                                              ║
+║  Sélection: 1,2,4                                                            ║
+║                                                                              ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                    GÉNÉRATION BATCH (3 agents)                               ║
+╠══════════════════════════════════════════════════════════════════════════════╣
+║                                                                              ║
+║  [████████████████████████████████████████] 100%                            ║
+║                                                                              ║
+║  ✅ 1/3 Frontend Expert (React) .......... Généré                           ║
+║  ✅ 2/3 Backend Expert (Node.js) ......... Généré                           ║
+║  ✅ 3/3 Security Checker ................. Généré                           ║
+║                                                                              ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+```
+
+### 9.7 Structure Fichiers V2
+
+```
+assistant-architect/
+├── demo/
+│   ├── run_demo.py              # V1 (conservée)
+│   ├── run_demo_v2.py           # V2 (nouvelle)
+│   └── lib/
+│       ├── __init__.py
+│       ├── feedback.py          # Module feedback utilisateur
+│       ├── selector.py          # Module multi-sélection
+│       └── batch_generator.py   # Génération batch
+├── src/
+│   └── generators/
+│       ├── agent_builder.py     # V1 (existant)
+│       └── catalog_v2.py        # Catalogue enrichi V2
+└── ...
+```
+
+### 9.8 CLI V2
+
+```bash
+# V1 (inchangée)
+python demo/run_demo.py
+python demo/run_demo.py --non-interactive
+
+# V2 (nouvelle)
+python demo/run_demo_v2.py
+python demo/run_demo_v2.py --non-interactive
+python demo/run_demo_v2.py --max-agents 10
+python demo/run_demo_v2.py --export-feedback feedback.json
+```
+
+---
+
+## 10. Évolutions Futures (v3+)
 
 | Fonctionnalité | Description | Priorité |
 |----------------|-------------|----------|
 | Métriques complètes | Hooks fonctionnels avec collecte | Haute |
 | UI Web | Interface de validation architecte | Moyenne |
-| Templates enrichis | Plus de types d'agents | Moyenne |
-| Versioning agents | Gestion des versions et rollback | Basse |
-| Multi-repo | Analyse de plusieurs repos | Basse |
+| Versioning agents | Gestion des versions et rollback | Moyenne |
+| Multi-repo | Analyse de plusieurs repos simultanément | Basse |
+| Fine-tuning | Adaptation des prompts par retours utilisateurs | Basse |
 
 ---
 
-## 10. Références
+## 11. Références
 
 - [CADRAGE.md](./CADRAGE.md) - Document de cadrage complet
 - [knowledge/rules/bpce-group-rules.yaml](./knowledge/rules/bpce-group-rules.yaml) - Règles BPCE
