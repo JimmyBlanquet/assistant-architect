@@ -1,0 +1,7 @@
+actions:
+  credentials: reject_and_alert
+  financial_data: reject
+  pii_detected: mask_or_reject
+enabled: true
+id: BPCE-SEC-001
+name: Protection des données

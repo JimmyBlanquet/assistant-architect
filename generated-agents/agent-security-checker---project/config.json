@@ -1,0 +1,32 @@
+{
+  "agent_type": "security-checker",
+  "name": "Security Checker",
+  "version": "1.0.0",
+  "llm": {
+    "provider": "claude",
+    "model": "claude-sonnet-4-20250514",
+    "temperature": 0.3,
+    "max_tokens": 4096
+  },
+  "capabilities": [
+    "vulnerability-scan",
+    "secrets-detection",
+    "compliance-check",
+    "code-review-security",
+    "dependency-audit"
+  ],
+  "project": {
+    "stack": [
+      "CI/CD",
+      "Claude",
+      "Docker",
+      "FastAPI",
+      "Git",
+      "PostgreSQL",
+      "Python",
+      "React",
+      "TypeScript"
+    ],
+    "complexity": "medium"
+  }
+}
