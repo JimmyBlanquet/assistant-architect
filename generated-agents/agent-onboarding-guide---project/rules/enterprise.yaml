@@ -1,0 +1,197 @@
+mandatory: true
+metadata:
+  contact: architecture@bpce.fr
+  created: '2025-11-25'
+  last_updated: '2025-11-25'
+  next_review: '2026-02-25'
+  owner: Direction Architecture BPCE
+  review_cycle: trimestriel
+rules:
+  data_protection:
+    description: 'L''agent IA ne doit JAMAIS traiter, stocker ou transmettre
+
+      de données sensibles en clair dans ses interactions.
+
+      '
+    id: BPCE-SEC-001
+    message_on_violation: '⚠️ DONNÉES SENSIBLES DÉTECTÉES
+
+      Cette requête contient des données protégées ({{type}}).
+
+      Veuillez reformuler sans inclure : {{detected_items}}
+
+
+      Référence: Politique de sécurité BPCE-SEC-001
+
+      '
+    name: Protection des données bancaires et personnelles
+    prohibited_data:
+    - action: mask_or_reject
+      description: Données personnelles identifiantes
+      examples:
+      - numéro client
+      - nom complet
+      - adresse postale
+      - email personnel
+      - numéro de téléphone
+      severity: high
+      type: PII
+    - action: reject
+      description: Données financières
+      examples:
+      - IBAN
+      - numéro de carte bancaire
+      - RIB
+      - solde de compte
+      - historique de transactions
+      severity: critical
+      type: FINANCIAL
+    - action: reject_and_alert
+      description: Identifiants et secrets
+      examples:
+      - mot de passe
+      - token API
+      - clé SSH
+      - certificat
+      - clé de chiffrement
+      severity: critical
+      type: CREDENTIALS
+    validation:
+    - Scan automatique des prompts entrants
+    - Scan des réponses générées avant affichage
+    - Blocage immédiat si données sensibles détectées
+  rgpd_compliance:
+    audit:
+      frequency: mensuel
+      responsible: DPO BPCE
+      retention: 24 mois
+    description: 'Toute interaction avec l''agent doit respecter les principes
+
+      du RGPD : minimisation, finalité, conservation limitée.
+
+      '
+    id: BPCE-RGPD-001
+    name: Conformité au Règlement Général sur la Protection des Données
+    principles:
+      consentement:
+        description: Consentement explicite requis
+        implementation:
+        - Message d'information au premier lancement
+        - Opt-in pour les fonctionnalités de télémétrie
+        - Possibilité de retirer le consentement
+      droit_acces:
+        description: L'utilisateur peut demander ses données
+        implementation:
+        - Commande /mes-donnees disponible
+        - Export possible en JSON
+        - Suppression sur demande via /supprimer-donnees
+        - 'Délai de réponse: 72h maximum'
+      finalite:
+        description: Utilisation uniquement pour l'aide au développement
+        prohibited_uses:
+        - Analyse comportementale des développeurs
+        - Évaluation de performance individuelle
+        - Marketing ou recommandation commerciale
+        - Partage avec des tiers
+        - Entraînement de modèles externes
+      minimisation:
+        description: Ne collecter que les données strictement nécessaires
+        implementation:
+        - Pas de stockage des conversations au-delà de la session
+        - Pas de profilage utilisateur
+        - Anonymisation des logs techniques
+        - Purge automatique après 24h
+  traceability:
+    access:
+    - permission: read
+      role: audit_interne
+      scope: all_logs
+    - permission: read
+      role: security_team
+      scope: security_events
+    - permission: read_export
+      role: compliance_officer
+      scope: all_logs
+    - permission: read
+      role: developer
+      scope: own_logs_only
+    description: 'Toutes les actions significatives de l''agent doivent être
+
+      tracées pour permettre un audit a posteriori.
+
+      '
+    id: BPCE-AUDIT-001
+    logged_events:
+    - data:
+      - timestamp
+      - user_id_hash
+      - project_id
+      - agent_type
+      description: Début de session utilisateur
+      event: session_start
+      retention: 12 mois
+    - data:
+      - timestamp
+      - file_path
+      - language
+      - lines_count
+      - hash_content
+      description: Code généré par l'agent
+      event: code_generated
+      retention: 12 mois
+    - data:
+      - timestamp
+      - file_path
+      - diff_hash
+      - validation_status
+      description: Code existant modifié
+      event: code_modified
+      retention: 12 mois
+    - data:
+      - timestamp
+      - command_name
+      - exit_code
+      - context_hash
+      description: Commande système exécutée
+      event: command_executed
+      retention: 12 mois
+    - data:
+      - timestamp
+      - rule_id
+      - severity
+      - action_taken
+      - user_id_hash
+      description: Tentative de violation d'une règle
+      event: rule_violation_attempt
+      retention: 24 mois
+    name: Traçabilité des actions pour audit réglementaire
+    reports:
+    - content:
+      - nb_sessions
+      - nb_generations
+      - violations
+      - top_agents_used
+      frequency: monthly
+      name: Rapport mensuel d'activité
+      recipients:
+      - security_team
+      - compliance_officer
+    - content:
+      - full_context
+      - user_action
+      - remediation
+      - root_cause
+      name: Rapport d'incident
+      recipients:
+      - security_team
+      - manager
+      sla: 24h
+      trigger: rule_violation
+    storage:
+      backup: Réplication géographique
+      encryption: AES-256 at rest, TLS 1.3 in transit
+      format: JSON structured (JSON Lines)
+      location: SIEM interne BPCE
+      retention: 12 mois minimum
+scope: group
+version: '1.0'
