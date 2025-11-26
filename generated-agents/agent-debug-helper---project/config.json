@@ -1,0 +1,25 @@
+{
+  "agent_type": "debug-helper",
+  "name": "Debug Helper",
+  "version": "1.0.0",
+  "llm": {
+    "provider": "claude",
+    "model": "claude-sonnet-4-20250514",
+    "temperature": 0.7,
+    "max_tokens": 4096
+  },
+  "capabilities": [
+    "log-analysis",
+    "stack-trace",
+    "root-cause",
+    "fix-suggestion"
+  ],
+  "project": {
+    "stack": [
+      "Claude",
+      "Git",
+      "Python"
+    ],
+    "complexity": "low"
+  }
+}

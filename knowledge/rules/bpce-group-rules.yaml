@@ -1,0 +1,226 @@
+# Règles Groupe BPCE
+# Obligatoires pour tous les agents IA du groupe
+
+version: "1.0"
+scope: "group"
+mandatory: true
+
+rules:
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # RÈGLE 1 : PROTECTION DES DONNÉES SENSIBLES
+  # ═══════════════════════════════════════════════════════════════════════════
+  data_protection:
+    id: "BPCE-SEC-001"
+    name: "Protection des données bancaires et personnelles"
+    description: |
+      L'agent IA ne doit JAMAIS traiter, stocker ou transmettre
+      de données sensibles en clair dans ses interactions.
+
+    prohibited_data:
+      - type: "PII"
+        description: "Données personnelles identifiantes"
+        examples:
+          - "numéro client"
+          - "nom complet"
+          - "adresse postale"
+          - "email personnel"
+          - "numéro de téléphone"
+        action: "mask_or_reject"
+        severity: "high"
+
+      - type: "FINANCIAL"
+        description: "Données financières"
+        examples:
+          - "IBAN"
+          - "numéro de carte bancaire"
+          - "RIB"
+          - "solde de compte"
+          - "historique de transactions"
+        action: "reject"
+        severity: "critical"
+
+      - type: "CREDENTIALS"
+        description: "Identifiants et secrets"
+        examples:
+          - "mot de passe"
+          - "token API"
+          - "clé SSH"
+          - "certificat"
+          - "clé de chiffrement"
+        action: "reject_and_alert"
+        severity: "critical"
+
+    validation:
+      - "Scan automatique des prompts entrants"
+      - "Scan des réponses générées avant affichage"
+      - "Blocage immédiat si données sensibles détectées"
+
+    message_on_violation: |
+      ⚠️ DONNÉES SENSIBLES DÉTECTÉES
+      Cette requête contient des données protégées ({{type}}).
+      Veuillez reformuler sans inclure : {{detected_items}}
+
+      Référence: Politique de sécurité BPCE-SEC-001
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # RÈGLE 2 : CONFORMITÉ RGPD
+  # ═══════════════════════════════════════════════════════════════════════════
+  rgpd_compliance:
+    id: "BPCE-RGPD-001"
+    name: "Conformité au Règlement Général sur la Protection des Données"
+    description: |
+      Toute interaction avec l'agent doit respecter les principes
+      du RGPD : minimisation, finalité, conservation limitée.
+
+    principles:
+      minimisation:
+        description: "Ne collecter que les données strictement nécessaires"
+        implementation:
+          - "Pas de stockage des conversations au-delà de la session"
+          - "Pas de profilage utilisateur"
+          - "Anonymisation des logs techniques"
+          - "Purge automatique après 24h"
+
+      finalite:
+        description: "Utilisation uniquement pour l'aide au développement"
+        prohibited_uses:
+          - "Analyse comportementale des développeurs"
+          - "Évaluation de performance individuelle"
+          - "Marketing ou recommandation commerciale"
+          - "Partage avec des tiers"
+          - "Entraînement de modèles externes"
+
+      droit_acces:
+        description: "L'utilisateur peut demander ses données"
+        implementation:
+          - "Commande /mes-donnees disponible"
+          - "Export possible en JSON"
+          - "Suppression sur demande via /supprimer-donnees"
+          - "Délai de réponse: 72h maximum"
+
+      consentement:
+        description: "Consentement explicite requis"
+        implementation:
+          - "Message d'information au premier lancement"
+          - "Opt-in pour les fonctionnalités de télémétrie"
+          - "Possibilité de retirer le consentement"
+
+    audit:
+      frequency: "mensuel"
+      responsible: "DPO BPCE"
+      retention: "24 mois"
+
+  # ═══════════════════════════════════════════════════════════════════════════
+  # RÈGLE 3 : TRAÇABILITÉ ET AUDIT
+  # ═══════════════════════════════════════════════════════════════════════════
+  traceability:
+    id: "BPCE-AUDIT-001"
+    name: "Traçabilité des actions pour audit réglementaire"
+    description: |
+      Toutes les actions significatives de l'agent doivent être
+      tracées pour permettre un audit a posteriori.
+
+    logged_events:
+      - event: "session_start"
+        description: "Début de session utilisateur"
+        data:
+          - "timestamp"
+          - "user_id_hash"
+          - "project_id"
+          - "agent_type"
+        retention: "12 mois"
+
+      - event: "code_generated"
+        description: "Code généré par l'agent"
+        data:
+          - "timestamp"
+          - "file_path"
+          - "language"
+          - "lines_count"
+          - "hash_content"
+        retention: "12 mois"
+
+      - event: "code_modified"
+        description: "Code existant modifié"
+        data:
+          - "timestamp"
+          - "file_path"
+          - "diff_hash"
+          - "validation_status"
+        retention: "12 mois"
+
+      - event: "command_executed"
+        description: "Commande système exécutée"
+        data:
+          - "timestamp"
+          - "command_name"
+          - "exit_code"
+          - "context_hash"
+        retention: "12 mois"
+
+      - event: "rule_violation_attempt"
+        description: "Tentative de violation d'une règle"
+        data:
+          - "timestamp"
+          - "rule_id"
+          - "severity"
+          - "action_taken"
+          - "user_id_hash"
+        retention: "24 mois"
+
+    storage:
+      format: "JSON structured (JSON Lines)"
+      retention: "12 mois minimum"
+      location: "SIEM interne BPCE"
+      encryption: "AES-256 at rest, TLS 1.3 in transit"
+      backup: "Réplication géographique"
+
+    access:
+      - role: "audit_interne"
+        permission: "read"
+        scope: "all_logs"
+      - role: "security_team"
+        permission: "read"
+        scope: "security_events"
+      - role: "compliance_officer"
+        permission: "read_export"
+        scope: "all_logs"
+      - role: "developer"
+        permission: "read"
+        scope: "own_logs_only"
+
+    reports:
+      - name: "Rapport mensuel d'activité"
+        frequency: "monthly"
+        content:
+          - "nb_sessions"
+          - "nb_generations"
+          - "violations"
+          - "top_agents_used"
+        recipients:
+          - "security_team"
+          - "compliance_officer"
+
+      - name: "Rapport d'incident"
+        trigger: "rule_violation"
+        content:
+          - "full_context"
+          - "user_action"
+          - "remediation"
+          - "root_cause"
+        recipients:
+          - "security_team"
+          - "manager"
+        sla: "24h"
+
+# ═══════════════════════════════════════════════════════════════════════════
+# MÉTADONNÉES
+# ═══════════════════════════════════════════════════════════════════════════
+metadata:
+  created: "2025-11-25"
+  last_updated: "2025-11-25"
+  owner: "Direction Architecture BPCE"
+  contact: "architecture@bpce.fr"
+  review_cycle: "trimestriel"
+  next_review: "2026-02-25"

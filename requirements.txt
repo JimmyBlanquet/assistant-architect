@@ -1,0 +1,8 @@
+# Assistant Architect - Dependencies
+
+# LLM Providers
+anthropic>=0.18.0          # Claude API
+google-generativeai>=0.3.0  # Gemini API (optional)
+
+# Utilities
+pyyaml>=6.0                 # YAML parsing for rules
